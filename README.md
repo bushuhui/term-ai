@@ -14,6 +14,125 @@ By default, ShellGPT uses OpenAI's API and GPT-4 model. You'll need an API key, 
 >
 > **❗️Note that ShellGPT is not optimized for local models and may not work as expected.**
 
+## Configuration
+
+### Runtime Configuration File
+
+ShellGPT stores configuration in `~/.config/shell_gpt/.sgptrc`, which is automatically created on first run. You can also override any configuration using environment variables (environment variables take precedence over config file).
+
+```text
+# ==================== API Configuration ====================
+# OpenAI API key. Alternatively, set OPENAI_API_KEY environment variable.
+OPENAI_API_KEY=your_api_key
+# API base URL. Set to "default" to resolve based on --model.
+# For local models (e.g., Ollama), set to http://localhost:11434
+API_BASE_URL=default
+# Enforce LiteLLM usage (for local LLMs).
+USE_LITELLM=false
+# Request timeout in seconds.
+REQUEST_TIMEOUT=60
+# Default OpenAI model to use.
+DEFAULT_MODEL=gpt-4o
+
+# ==================== Cache Configuration ====================
+# Chat cache folder.
+CHAT_CACHE_PATH=/tmp/shell_gpt/chat_cache
+# Max number of cached messages per chat session.
+CHAT_CACHE_LENGTH=100
+# Request cache folder.
+CACHE_PATH=/tmp/shell_gpt/cache
+# Request cache length (number of cached requests).
+CACHE_LENGTH=100
+
+# ==================== Output Style Configuration ====================
+# Default color for shell and code completions.
+# Available colors: black, red, green, yellow, blue, magenta, cyan, white,
+#                   bright_black, bright_red, bright_green, bright_yellow,
+#                   bright_blue, bright_magenta, bright_cyan, bright_white
+DEFAULT_COLOR=magenta
+# Pygments theme for markdown rendering.
+# Available themes: https://pygments.org/styles/
+CODE_THEME=dracula
+# Prettify markdown output (true/false).
+PRETTIFY_MARKDOWN=true
+# Disable streaming of responses (true/false).
+DISABLE_STREAMING=false
+
+# ==================== Shell Configuration ====================
+# Default to "Y" for no input in --shell mode (true/false).
+DEFAULT_EXECUTE_SHELL_CMD=false
+# Shell interaction mode (true/false).
+SHELL_INTERACTION=true
+# Operating system name. Set to "auto" for automatic detection.
+OS_NAME=auto
+# Shell name. Set to "auto" for automatic detection.
+SHELL_NAME=auto
+
+# ==================== Function Calling Configuration ====================
+# Allow LLM to use functions (true/false).
+OPENAI_USE_FUNCTIONS=true
+# Path to directory with custom functions.
+OPENAI_FUNCTIONS_PATH=~/.config/shell_gpt/functions
+# Print output of functions when LLM uses them (true/false).
+SHOW_FUNCTIONS_OUTPUT=false
+
+# ==================== Role Configuration ====================
+# Role storage path.
+ROLE_STORAGE_PATH=~/.config/shell_gpt/roles
+```
+
+> [!TIP]
+> **Priority:** Environment variables override config file settings.
+
+```shell
+# Use a different model temporarily
+export DEFAULT_MODEL=gpt-3.5-turbo
+sgpt "hello"
+
+# Use local Ollama model
+export USE_LITELLM=true
+export API_BASE_URL=http://localhost:11434
+export OPENAI_API_KEY=ollama
+sgpt "hello"
+```
+
+### Command Line Arguments
+
+```text
+╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────────╮
+│   prompt      [PROMPT]  The prompt to generate completions for.                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --model            TEXT                       Large language model to use. [default: gpt-4o]             │
+│ --temperature      FLOAT RANGE [0.0<=x<=2.0]  Randomness of generated output. [default: 0.0]             │
+│ --top-p            FLOAT RANGE [0.0<=x<=1.0]  Limits highest probable tokens (words). [default: 1.0]     │
+│ --md             --no-md                      Prettify markdown output. [default: md]                    │
+│ --editor                                      Open $EDITOR to provide a prompt. [default: no-editor]     │
+│ --cache                                       Cache completion results. [default: cache]                 │
+│ --version                                     Show version.                                              │
+│ --help                                        Show this message and exit.                                │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Assistance Options ─────────────────────────────────────────────────────────────────────────────────────╮
+│ --shell           -s                      Generate and execute shell commands.                           │
+│ --interaction         --no-interaction    Interactive mode for --shell option. [default: interaction]    │
+│ --describe-shell  -d                      Describe a shell command.                                      │
+│ --code            -c                      Generate only code.                                            │
+│ --functions           --no-functions      Allow function calls. [default: functions]                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Chat Options ───────────────────────────────────────────────────────────────────────────────────────────╮
+│ --chat                 TEXT  Follow conversation with id, use "temp" for quick session. [default: None]  │
+│ --repl                 TEXT  Start a REPL (Read–eval–print loop) session. [default: None]                │
+│ --show-chat            TEXT  Show all messages from provided chat id. [default: None]                    │
+│ --list-chats  -lc            List all existing chat ids.                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Role Options ───────────────────────────────────────────────────────────────────────────────────────────╮
+│ --role                  TEXT  System role for GPT model. [default: None]                                 │
+│ --create-role           TEXT  Create role. [default: None]                                               │
+│ --show-role             TEXT  Show role. [default: None]                                                 │
+│ --list-roles   -lr            List roles.                                                                │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
+
 ## Usage
 **ShellGPT** is designed to quickly analyse and retrieve information. It's useful for straightforward requests ranging from technical configurations to general knowledge.
 ```shell
@@ -355,81 +474,6 @@ sgpt "what are the colors of a rainbow"
 Next time, same exact query will get results from local cache instantly. Note that `sgpt "what are the colors of a rainbow" --temperature 0.5` will make a new request, since we didn't provide `--temperature` (same applies to `--top-probability`) on previous request.
 
 This is just some examples of what we can do using OpenAI GPT models, I'm sure you will find it useful for your specific use cases.
-
-### Runtime configuration file
-You can setup some parameters in runtime configuration file `~/.config/shell_gpt/.sgptrc`:
-```text
-# API key, also it is possible to define OPENAI_API_KEY env.
-OPENAI_API_KEY=your_api_key
-# Base URL of the backend server. If "default" URL will be resolved based on --model.
-API_BASE_URL=default
-# Max amount of cached message per chat session.
-CHAT_CACHE_LENGTH=100
-# Chat cache folder.
-CHAT_CACHE_PATH=/tmp/shell_gpt/chat_cache
-# Request cache length (amount).
-CACHE_LENGTH=100
-# Request cache folder.
-CACHE_PATH=/tmp/shell_gpt/cache
-# Request timeout in seconds.
-REQUEST_TIMEOUT=60
-# Default OpenAI model to use.
-DEFAULT_MODEL=gpt-4o
-# Default color for shell and code completions.
-DEFAULT_COLOR=magenta
-# When in --shell mode, default to "Y" for no input.
-DEFAULT_EXECUTE_SHELL_CMD=false
-# Disable streaming of responses
-DISABLE_STREAMING=false
-# The pygment theme to view markdown (default/describe role).
-CODE_THEME=default
-# Path to a directory with functions.
-OPENAI_FUNCTIONS_PATH=/Users/user/.config/shell_gpt/functions
-# Print output of functions when LLM uses them.
-SHOW_FUNCTIONS_OUTPUT=false
-# Allows LLM to use functions.
-OPENAI_USE_FUNCTIONS=true
-# Enforce LiteLLM usage (for local LLMs).
-USE_LITELLM=false
-```
-Possible options for `DEFAULT_COLOR`: black, red, green, yellow, blue, magenta, cyan, white, bright_black, bright_red, bright_green, bright_yellow, bright_blue, bright_magenta, bright_cyan, bright_white.
-Possible options for `CODE_THEME`: https://pygments.org/styles/
-
-### Full list of arguments
-```text
-╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────────╮
-│   prompt      [PROMPT]  The prompt to generate completions for.                                          │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --model            TEXT                       Large language model to use. [default: gpt-4o]             │
-│ --temperature      FLOAT RANGE [0.0<=x<=2.0]  Randomness of generated output. [default: 0.0]             │
-│ --top-p            FLOAT RANGE [0.0<=x<=1.0]  Limits highest probable tokens (words). [default: 1.0]     │
-│ --md             --no-md                      Prettify markdown output. [default: md]                    │
-│ --editor                                      Open $EDITOR to provide a prompt. [default: no-editor]     │
-│ --cache                                       Cache completion results. [default: cache]                 │
-│ --version                                     Show version.                                              │
-│ --help                                        Show this message and exit.                                │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Assistance Options ─────────────────────────────────────────────────────────────────────────────────────╮
-│ --shell           -s                      Generate and execute shell commands.                           │
-│ --interaction         --no-interaction    Interactive mode for --shell option. [default: interaction]    │
-│ --describe-shell  -d                      Describe a shell command.                                      │
-│ --code            -c                      Generate only code.                                            │
-│ --functions           --no-functions      Allow function calls. [default: functions]                     │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Chat Options ───────────────────────────────────────────────────────────────────────────────────────────╮
-│ --chat                 TEXT  Follow conversation with id, use "temp" for quick session. [default: None]  │
-│ --repl                 TEXT  Start a REPL (Read–eval–print loop) session. [default: None]                │
-│ --show-chat            TEXT  Show all messages from provided chat id. [default: None]                    │
-│ --list-chats  -lc            List all existing chat ids.                                                 │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Role Options ───────────────────────────────────────────────────────────────────────────────────────────╮
-│ --role                  TEXT  System role for GPT model. [default: None]                                 │
-│ --create-role           TEXT  Create role. [default: None]                                               │
-│ --show-role             TEXT  Show role. [default: None]                                                 │
-│ --list-roles   -lr            List roles.                                                                │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-```
 
 ## Docker
 Run the container using the `OPENAI_API_KEY` environment variable, and a docker volume to store cache. Consider to set the environment variables `OS_NAME` and `SHELL_NAME` according to your preferences.
