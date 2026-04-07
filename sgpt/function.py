@@ -20,7 +20,7 @@ class Function:
         return self._name  # type: ignore
 
     @property
-    def openai_schema(self) -> dict[str, Any]:
+    def openai_schema(self) -> Dict[str, Any]:
         return self._openai_schema  # type: ignore
 
     @property

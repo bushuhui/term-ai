@@ -8,7 +8,7 @@ description = "A command-line productivity tool powered by large language models
 keywords = ["shell", "gpt", "openai", "ollama", "cli", "productivity", "cheet-sheet"]
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 authors = [{ name = "Farkhod Sadykov", email = "farkhod@sadykov.dev" }]
 dynamic = ["version"]
 classifiers = [

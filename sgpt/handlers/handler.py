@@ -58,7 +58,7 @@ class Handler:
 
     def handle_function_call(
         self,
-        messages: List[dict[str, Any]],
+        messages: List[Dict[str, Any]],
         tool_call_id: str,
         name: str,
         arguments: str,
