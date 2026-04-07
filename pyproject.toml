@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "shell_gpt"
+name = "term-ai"
 description = "A command-line productivity tool powered by large language models, will help you accomplish your tasks faster and more efficiently."
 keywords = ["shell", "gpt", "openai", "ollama", "cli", "productivity", "cheet-sheet"]
 readme = "README.md"
