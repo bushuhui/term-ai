@@ -9,7 +9,7 @@ from click import UsageError
 from click.types import Choice
 from prompt_toolkit import PromptSession
 
-from sgpt.config import cfg
+from sgpt.config import cfg, run_setup_if_needed
 from sgpt.function import get_openai_schemas
 from sgpt.handlers.chat_handler import ChatHandler
 from sgpt.handlers.default_handler import DefaultHandler
@@ -155,6 +155,11 @@ def main(
         callback=inst_funcs,
         hidden=True,  # Hiding since should be used only once.
     ),
+    setup: bool = typer.Option(
+        False,
+        "--setup",
+        help="Interactive setup to configure LLM settings.",
+    ),
 ) -> None:
     stdin_passed = not sys.stdin.isatty()
 
@@ -269,6 +274,7 @@ def main(
 
 
 def entry_point() -> None:
+    run_setup_if_needed()
     typer.run(main)
 
 

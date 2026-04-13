@@ -1,4 +1,5 @@
 import os
+import sys
 from getpass import getpass
 from pathlib import Path
 from tempfile import gettempdir
@@ -14,7 +15,6 @@ FUNCTIONS_PATH = SHELL_GPT_CONFIG_FOLDER / "functions"
 CHAT_CACHE_PATH = Path(gettempdir()) / "chat_cache"
 CACHE_PATH = Path(gettempdir()) / "cache"
 
-# TODO: Refactor ENV variables with SGPT_ prefix.
 DEFAULT_CONFIG = {
     # TODO: Refactor it to CHAT_STORAGE_PATH.
     "CHAT_CACHE_PATH": os.getenv("CHAT_CACHE_PATH", str(CHAT_CACHE_PATH)),
@@ -31,7 +31,7 @@ DEFAULT_CONFIG = {
     "OPENAI_FUNCTIONS_PATH": os.getenv("OPENAI_FUNCTIONS_PATH", str(FUNCTIONS_PATH)),
     "OPENAI_USE_FUNCTIONS": os.getenv("OPENAI_USE_FUNCTIONS", "true"),
     "SHOW_FUNCTIONS_OUTPUT": os.getenv("SHOW_FUNCTIONS_OUTPUT", "false"),
-    "API_BASE_URL": os.getenv("API_BASE_URL", "default"),
+    "API_BASE_URL": "default",
     "PRETTIFY_MARKDOWN": os.getenv("PRETTIFY_MARKDOWN", "true"),
     "USE_LITELLM": os.getenv("USE_LITELLM", "false"),
     "SHELL_INTERACTION": os.getenv("SHELL_INTERACTION ", "true"),
@@ -39,6 +39,78 @@ DEFAULT_CONFIG = {
     "SHELL_NAME": os.getenv("SHELL_NAME", "auto"),
     # New features might add their own config variables here.
 }
+
+
+def _do_setup(config_path: Path) -> None:
+    """Run interactive setup and write config, then exit."""
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+
+    print("\n=== PI Term AI Setup ===\n")
+    api_url = input("Enter LLM API URL (e.g., https://api.openai.com/v1): ").strip()
+    if not api_url:
+        print("Error: API URL cannot be empty.")
+        os._exit(1)
+    model_name = input("Enter model name (e.g., gpt-4o): ").strip()
+    if not model_name:
+        print("Error: Model name cannot be empty.")
+        os._exit(1)
+    api_key = getpass(prompt="Enter API key: ")
+    if not api_key:
+        print("Error: API key cannot be empty.")
+        os._exit(1)
+
+    config = {**DEFAULT_CONFIG}
+    config["API_BASE_URL"] = api_url
+    config["DEFAULT_MODEL"] = model_name
+    config["OPENAI_API_KEY"] = api_key
+
+    with open(config_path, "w", encoding="utf-8") as file:
+        for key, value in config.items():
+            file.write(f"{key}={value}\n")
+
+    print(f"\nConfig saved to: {config_path.absolute()}")
+    print("Setup complete! Please run your command again.")
+    os._exit(0)
+
+
+def needs_setup() -> bool:
+    """Check if the config is missing essential LLM settings."""
+    if not SHELL_GPT_CONFIG_PATH.exists():
+        return True
+    temp_cfg: dict[str, str] = {}
+    with open(SHELL_GPT_CONFIG_PATH, "r", encoding="utf-8") as file:
+        for line in file:
+            if line.strip() and not line.startswith("#"):
+                key, value = line.strip().split("=", 1)
+                temp_cfg[key] = value
+    return not temp_cfg.get("OPENAI_API_KEY")
+
+
+def run_setup_if_needed() -> None:
+    """If --setup is in sys.argv or config is missing, handle interactive setup."""
+    if "--setup" not in sys.argv and not needs_setup():
+        return
+    config_path = SHELL_GPT_CONFIG_PATH
+    if config_path.exists() and "--setup" in sys.argv:
+        print(f"Config file already exists at: {config_path.absolute()}")
+        overwrite = input("Do you want to overwrite it? (y/N): ").strip().lower()
+        if overwrite != "y":
+            print("Setup cancelled.")
+            os._exit(0)
+    _do_setup(config_path)
+
+
+# TODO: Refactor it to CHAT_STORAGE_PATH.
+def setup_config() -> None:
+    """Interactive setup to configure LLM settings."""
+    config_path = SHELL_GPT_CONFIG_PATH
+    if config_path.exists():
+        print(f"Config file already exists at: {config_path.absolute()}")
+        overwrite = input("Do you want to overwrite it? (y/N): ").strip().lower()
+        if overwrite != "y":
+            print("Setup cancelled.")
+            return
+    _do_setup(config_path)
 
 
 class Config(dict):  # type: ignore
@@ -55,11 +127,8 @@ class Config(dict):  # type: ignore
             if has_new_config:
                 self._write()
         else:
-            config_path.parent.mkdir(parents=True, exist_ok=True)
-            # Don't write API key to config file if it is in the environment.
-            if not defaults.get("OPENAI_API_KEY") and not os.getenv("OPENAI_API_KEY"):
-                __api_key = getpass(prompt="Please enter your OpenAI API key: ")
-                defaults["OPENAI_API_KEY"] = __api_key
+            # No config file — just use defaults. First-time interactive setup
+            # is handled by run_setup_if_needed() in entry_point().
             super().__init__(**defaults)
             self._write()
 

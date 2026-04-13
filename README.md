@@ -9,6 +9,14 @@ pip install shell-gpt
 ```
 By default, ShellGPT uses OpenAI's API and GPT-4 model. You'll need an API key, you can generate one [here](https://platform.openai.com/api-keys). You will be prompted for your key which will then be stored in `~/.config/shell_gpt/.sgptrc`. OpenAI API is not free of charge, please refer to the [OpenAI pricing](https://openai.com/pricing) for more information.
 
+You can also configure your LLM settings manually at any time by running:
+
+```shell
+sgpt --setup
+```
+
+This will guide you through entering the API URL, model name, and API key, then save them to the config file.
+
 > [!TIP]
 > Alternatively, you can use locally hosted open source models which are available for free. To use local models, you will need to run your own LLM backend server such as [Ollama](https://github.com/ollama/ollama). To set up ShellGPT with Ollama, please follow this comprehensive [guide](https://github.com/TheR1D/shell_gpt/wiki/Ollama).
 >
@@ -110,6 +118,7 @@ sgpt "hello"
 │ --editor                                      Open $EDITOR to provide a prompt. [default: no-editor]     │
 │ --cache                                       Cache completion results. [default: cache]                 │
 │ --version                                     Show version.                                              │
+│ --setup                                       Interactive setup to configure LLM settings.               │
 │ --help                                        Show this message and exit.                                │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Assistance Options ─────────────────────────────────────────────────────────────────────────────────────╮
